@@ -33,7 +33,6 @@ for column in instances_painel.columns:
 
 # Modelo treinado com a base de SP
 joblib_model = joblib.load("persisted_model/joblib_final_model.pkl")
-print(joblib_model)
 
 # Classificando Epítopos
 
@@ -60,14 +59,13 @@ def returnReactiveEplets(labels):
                     cutoff = db_pe['panel_min_mfi'][index]          # Atualizamos o valor do cutoff
         else:                                                       
             results = {                                             # Se mudarmos de painel, resetamos as análises
-                'result_sugestion': {"cutoff": ""},
-                'result_user': {
+                    'painel': '',
                     'analysis': [],
                     'cutoff': ''
-                }
             }
-            results['result_user']['analysis'] = predict_eplet     # Preenchemos a lista de epítopos classificados como reativos
-            results['result_user']['cutoff'] = str(cutoff)         # Preenchemos o valor do cutoff
+            results['painel'] = painel_number                      # Preenchemos o identificador do painel
+            results['analysis'] = predict_eplet                    # Preenchemos a lista de epítopos classificados como reativos
+            results['cutoff'] = str(cutoff)                        # Preenchemos o valor do cutoff
             painels.append(results)                                # Adicionamos à lista de resultados
             
             painel_number = db_pe['panel_info'][index]             # Atualizamos o identificador do painel
@@ -77,10 +75,16 @@ def returnReactiveEplets(labels):
             
     return painels
 
+'''
 def saveResults(panels):
     for index in range(0, len(panels)):
         with open('output/web_format/panel_data_{}.json'.format(index), 'w') as json_file:
             json.dump(panels[index], json_file)
+'''
+
+def saveResults(panels):
+    with open('output/panels_output.json', 'w') as json_file:
+            json.dump(panels, json_file)
 
 panels = returnReactiveEplets(predicted_labels_painel)
 saveResults(panels)
