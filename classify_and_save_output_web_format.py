@@ -4,6 +4,7 @@
 import json
 import joblib
 import pandas as pd
+from flask import Flask
 
 # Importando a entrada em formato .json:
 
@@ -75,16 +76,28 @@ def returnReactiveEplets(labels):
             
     return painels
 
+panels = returnReactiveEplets(predicted_labels_painel)
+
 '''
 def saveResults(panels):
     for index in range(0, len(panels)):
         with open('output/web_format/panel_data_{}.json'.format(index), 'w') as json_file:
             json.dump(panels[index], json_file)
-'''
+
 
 def saveResults(panels):
     with open('output/panels_output.json', 'w') as json_file:
             json.dump(panels, json_file)
 
-panels = returnReactiveEplets(predicted_labels_painel)
 saveResults(panels)
+'''
+
+panels_json = json.dumps(panels)
+
+app = Flask(__name__)
+
+@app.route('/')
+def ola():
+    return panels_json
+
+app.run()
