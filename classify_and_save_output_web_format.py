@@ -60,11 +60,11 @@ def returnReactiveEplets(labels):
                     cutoff = db_pe['panel_min_mfi'][index]          # Atualizamos o valor do cutoff
         else:                                                       
             results = {                                             # Se mudarmos de painel, resetamos as análises
-                    'painel': '',
+                    'panel': '',
                     'analysis': [],
                     'cutoff': ''
             }
-            results['painel'] = painel_number                      # Preenchemos o identificador do painel
+            results['panel'] = painel_number                      # Preenchemos o identificador do painel
             results['analysis'] = predict_eplet                    # Preenchemos a lista de epítopos classificados como reativos
             results['cutoff'] = str(cutoff)                        # Preenchemos o valor do cutoff
             painels.append(results)                                # Adicionamos à lista de resultados
@@ -77,21 +77,6 @@ def returnReactiveEplets(labels):
     return painels
 
 panels = returnReactiveEplets(predicted_labels_painel)
-
-'''
-def saveResults(panels):
-    for index in range(0, len(panels)):
-        with open('output/web_format/panel_data_{}.json'.format(index), 'w') as json_file:
-            json.dump(panels[index], json_file)
-
-
-def saveResults(panels):
-    with open('output/panels_output.json', 'w') as json_file:
-            json.dump(panels, json_file)
-
-saveResults(panels)
-'''
-
 panels_json = json.dumps(panels)
 
 app = Flask(__name__)
