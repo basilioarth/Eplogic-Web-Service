@@ -5,25 +5,27 @@ import json
 import joblib
 import pandas as pd
 from flask import Flask
+import requests
+
+app = Flask(__name__)
 
 # Importando a entrada em formato .json:
 
-with open('input/pe-dataset.json') as file:
-    pe_dataset = json.load(file)
+dataset = requests.get('/panels').text
 
 # Transformando a entrada em um dataframe:
 
-db_pe = pd.DataFrame.from_dict(pe_dataset, orient='index')
+db = pd.DataFrame.from_dict(dataset, orient='index')
 
 # Agrupando o dataframe por painéis:
 
-db_pe = db_pe.sort_values(by='panel_info')
+db = db.sort_values(by='panel_info')
 
-db_pe.reset_index(level=0, inplace=True)
+db.reset_index(level=0, inplace=True)
 
 # Instâncias do painel:
 
-instances_painel = db_pe.drop(columns=['index', 'panel_info', 'panel_eplet', 'reactive'])
+instances_painel = db.drop(columns=['index', 'panel_info', 'panel_eplet', 'reactive'])
 
 # Transformando os valores categóricos em numéricos:
 
@@ -42,22 +44,22 @@ predicted_labels_painel = joblib_model.predict(instances_painel)
 def returnReactiveEplets(labels):
     painels = []
     predict_eplet = []
-    painel_number = db_pe['panel_info'][0]                          # Recebe o identificador do primeiro painel
+    painel_number = db['panel_info'][0]                          # Recebe o identificador do primeiro painel
     first_react_eplet = 1                                           # Flag para controlarmos o cálculo do cutoff
     cutoff = 0                                                                                                                
     
     for index in range(0, len(labels)):                             # Percorre todas as instâncias da base
-        if(db_pe['panel_info'][index] == painel_number):            # Se ainda estivermos no mesmo painel
+        if(db['panel_info'][index] == painel_number):            # Se ainda estivermos no mesmo painel
             
             if(labels[index] == 1):                                 # Se o epítopo for classificado como reativo
-                predict_eplet.append(db_pe['panel_eplet'][index])   # Adiconamos à lista de epítopos classificados como reativos
+                predict_eplet.append(db['panel_eplet'][index])   # Adiconamos à lista de epítopos classificados como reativos
                 
                 if(first_react_eplet):                              # Verificamos se é o primeiro epítopo reativo daquele painel
-                    cutoff = db_pe['panel_min_mfi'][index]          # Inicializamos o valor do cutoff
+                    cutoff = db['panel_min_mfi'][index]          # Inicializamos o valor do cutoff
                     first_react_eplet = 0                           # Atualizamos o valor da flag
                     
-                elif(db_pe['panel_min_mfi'][index] < cutoff):       # Verificamos se o cutoff do eplet é o menor cutoff
-                    cutoff = db_pe['panel_min_mfi'][index]          # Atualizamos o valor do cutoff
+                elif(db['panel_min_mfi'][index] < cutoff):       # Verificamos se o cutoff do eplet é o menor cutoff
+                    cutoff = db['panel_min_mfi'][index]          # Atualizamos o valor do cutoff
         else:                                                       
             results = {                                             # Se mudarmos de painel, resetamos as análises
                     'panel': '',
@@ -69,7 +71,7 @@ def returnReactiveEplets(labels):
             results['cutoff'] = str(cutoff)                        # Preenchemos o valor do cutoff
             painels.append(results)                                # Adicionamos à lista de resultados
             
-            painel_number = db_pe['panel_info'][index]             # Atualizamos o identificador do painel
+            painel_number = db['panel_info'][index]             # Atualizamos o identificador do painel
             predict_eplet = []                                     # Resetamos a lista de epítopos classificados como reativos
             cutoff = 0                                             # Resetamos o valor do cutoff
             first_react_eplet = 1                                  # Resetamos a flag para controlarmos o cálculo do cutoff
@@ -79,10 +81,8 @@ def returnReactiveEplets(labels):
 panels = returnReactiveEplets(predicted_labels_painel)
 panels_json = json.dumps(panels)
 
-app = Flask(__name__)
-
 @app.route('/')
-def ola():
+def output():
     return panels_json
 
 app.run()
